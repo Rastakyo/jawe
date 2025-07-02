@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Jarre'ou'tise !</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; }
+        #grid { display: flex; flex-wrap: wrap; width: 800px; margin: auto; }
+        .jarre {
+            width: 150px;
+            height: 150px;
+            margin: 5px;
+            background-size: cover;
+            background-image: url("/static/jarre.png");
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Jarre'ou'tise !</h1>
+    <p>Gorgées à boire : <span id="counter">0</span></p>
+    <button onclick="startGame()">Nouvelle Partie</button>
+    <div id="grid"></div>
+
+    <script>
+        const stateImages = {
+            hidden: "/static/jarre.png",
+            beer: "/static/biere.png",
+            serpent: "/static/serpent.png",
+            malus: "/static/2x.png",
+            bonus: "/static/pointant-vers-la-droite.png"
+        };
+
+        function createGrid() {
+            const grid = document.getElementById("grid");
+            grid.innerHTML = "";
+            for (let i = 0; i < 20; i++) {
+                const div = document.createElement("div");
+                div.className = "jarre";
+                div.id = "jarre-" + i;
+                div.onclick = () => clickJarre(i);
+                grid.appendChild(div);
+            }
+        }
+
+        function updateGrid(states, compteur) {
+            for (let i = 0; i < states.length; i++) {
+                const jarreDiv = document.getElementById("jarre-" + i);
+                jarreDiv.style.backgroundImage = `url(${stateImages[states[i]]})`;
+            }
+            document.getElementById("counter").textContent = compteur;
+        }
+
+        async function startGame() {
+            createGrid(); // 🔁 recrée les éléments HTML de la grille
+            const res = await fetch("/start");
+            const data = await res.json();
+            updateGrid(data.etat.jarres, data.etat.compteur);
+}
+
+
+        async function clickJarre(index) {
+            const res = await fetch("/click/" + index, { method: "POST" });
+            const data = await res.json();
+
+            const stateRes = await fetch("/state");
+            const stateData = await stateRes.json();
+            updateGrid(stateData.jarres, stateData.compteur);
+        }
+
+        window.onload = () => {
+            createGrid();
+            startGame();
+        };
+    </script>
+</body>
+</html>
